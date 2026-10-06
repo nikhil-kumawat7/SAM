@@ -11,6 +11,9 @@ phases:
   pre_build:
     commands:
       - cd $CODEBUILD_SRC_DIR/backend && sam validate -t template.yaml
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - export AUTO_BUCKET="fitness-tracker-sam-artifacts-${ACCOUNT_ID}"
+      - aws s3 mb s3://${AUTO_BUCKET} --region ap-southeast-2 || echo "Bucket already exists"
 
   build:
     commands:
@@ -19,7 +22,9 @@ phases:
 
   post_build:
     commands:
-      - cd $CODEBUILD_SRC_DIR/backend && sam package --template-file .aws-sam/build/template.yaml --s3-bucket $SAM_ARTIFACT_BUCKET --output-template-file packaged-template.yaml
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - export AUTO_BUCKET="fitness-tracker-sam-artifacts-${ACCOUNT_ID}"
+      - cd $CODEBUILD_SRC_DIR/backend && sam package --template-file .aws-sam/build/template.yaml --s3-bucket ${AUTO_BUCKET} --region ap-southeast-2 --output-template-file packaged-template.yaml
 
 reports:
   pytest_reports:
