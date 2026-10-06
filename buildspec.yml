@@ -6,43 +6,34 @@ phases:
       python: 3.9
     commands:
       - echo "Installing backend dependencies..."
-      - cd backend
-      - pip install -r src/requirements.txt
-      - pip install -r tests/requirements.txt
+      - cd backend && pip install -r src/requirements.txt
+      - cd backend && pip install -r tests/requirements.txt
   
   pre_build:
     commands:
       - echo "Validating AWS SAM template..."
-      - sam validate -t backend/template.yaml
+      - cd backend && sam validate -t template.yaml
 
   build:
     commands:
       - echo "Running TDD test suite with code coverage analysis..."
-      # Run pytest, generate JUnit reports, and enforce 80% coverage (Epic 4.1)
-      - PYTHONPATH=./ pytest --cov=src --cov-fail-under=80 --cov-report=xml --junitxml=reports/junit.xml tests/
+      - cd backend && PYTHONPATH=./ pytest --cov=src --cov-fail-under=80 --cov-report=xml --junitxml=reports/junit.xml tests/
       
       - echo "Building Serverless Application Model (SAM) resources..."
-      - sam build -t backend/template.yaml
+      - cd backend && sam build -t template.yaml
 
   post_build:
     commands:
-      - echo "Build and testing completed on `date`."
       - echo "Packaging SAM application for deployment..."
-      # This zips your Lambda code, uploads it to S3, and generates the final deployable CloudFormation template
-      - sam package --template-file backend/.aws-sam/build/template.yaml --s3-bucket $SAM_ARTIFACT_BUCKET --output-template-file packaged-template.yaml
+      - cd backend && sam package --template-file .aws-sam/build/template.yaml --s3-bucket $SAM_ARTIFACT_BUCKET --output-template-file packaged-template.yaml
 
-# Configuration to surface test and coverage metrics in the AWS CodeBuild console
 reports:
   pytest_reports:
     files:
       - backend/reports/junit.xml
     file-format: JUNITXML
-  coverage_reports:
-    files:
-      - backend/coverage.xml
-    file-format: COBERTURAXML
 
 artifacts:
+  base-directory: backend
   files:
     - packaged-template.yaml
-  name: ServerlessApiBuildArtifact
