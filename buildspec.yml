@@ -5,27 +5,25 @@ phases:
     runtime-versions:
       python: 3.9
     commands:
-      - echo "Installing backend dependencies..."
-      - cd backend && pip install -r src/requirements.txt
-      - cd backend && pip install -r tests/requirements.txt
+      - cd backend
+      - pip install -r src/requirements.txt
+      - pip install -r tests/requirements.txt
   
   pre_build:
     commands:
-      - echo "Validating AWS SAM template..."
-      - cd backend && sam validate -t template.yaml
+      - cd backend
+      - sam validate -t template.yaml
 
   build:
     commands:
-      - echo "Running TDD test suite with code coverage analysis..."
-      - cd backend && PYTHONPATH=./ pytest --cov=src --cov-fail-under=80 --cov-report=xml --junitxml=reports/junit.xml tests/
-      
-      - echo "Building Serverless Application Model (SAM) resources..."
-      - cd backend && sam build -t template.yaml
+      - cd backend
+      - python -m pytest --cov=src --cov-fail-under=80 --cov-report=xml --junitxml=reports/junit.xml tests/
+      - sam build -t template.yaml
 
   post_build:
     commands:
-      - echo "Packaging SAM application for deployment..."
-      - cd backend && sam package --template-file .aws-sam/build/template.yaml --s3-bucket $SAM_ARTIFACT_BUCKET --output-template-file packaged-template.yaml
+      - cd backend
+      - sam package --template-file .aws-sam/build/template.yaml --s3-bucket $SAM_ARTIFACT_BUCKET --output-template-file packaged-template.yaml
 
 reports:
   pytest_reports:
