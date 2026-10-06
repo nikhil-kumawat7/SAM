@@ -1,0 +1,46 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - echo "Installing backend dependencies..."
+      - cd backend
+      - pip install -r src/requirements.txt
+      - pip install -r tests/requirements.txt
+  
+  pre_build:
+    commands:
+      - echo "Validating AWS SAM template..."
+      - sam validate -t template.yaml
+
+  build:
+    commands:
+      - echo "Running TDD test suite with code coverage analysis..."
+      # Run pytest, generate JUnit reports, and enforce 80% coverage (Epic 4.1)
+      - PYTHONPATH=./ pytest --cov=src --cov-fail-under=80 --cov-report=xml --junitxml=reports/junit.xml tests/
+      
+      - echo "Building Serverless Application Model (SAM) resources..."
+      - sam build -t template.yaml
+
+  post_build:
+    commands:
+      - echo "Build and testing completed on `date`."
+
+# Configuration to surface test and coverage metrics in the AWS CodeBuild console
+reports:
+  pytest_reports:
+    files:
+      - backend/reports/junit.xml
+    file-format: JUNITXML
+  coverage_reports:
+    files:
+      - backend/coverage.xml
+    file-format: COBERTURAXML
+
+artifacts:
+  files:
+    - backend/.aws-sam/build/**/*
+    - backend/template.yaml
+  name: ServerlessApiBuildArtifact
