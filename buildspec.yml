@@ -5,25 +5,21 @@ phases:
     runtime-versions:
       python: 3.9
     commands:
-      - cd backend
-      - pip install -r src/requirements.txt
-      - pip install -r tests/requirements.txt
+      - cd $CODEBUILD_SRC_DIR/backend && pip install -r src/requirements.txt
+      - cd $CODEBUILD_SRC_DIR/backend && pip install -r tests/requirements.txt
   
   pre_build:
     commands:
-      - cd backend
-      - sam validate -t template.yaml
+      - cd $CODEBUILD_SRC_DIR/backend && sam validate -t template.yaml
 
   build:
     commands:
-      - cd backend
-      - python -m pytest --cov=src --cov-fail-under=80 --cov-report=xml --junitxml=reports/junit.xml tests/
-      - sam build -t template.yaml
+      - cd $CODEBUILD_SRC_DIR/backend && python -m pytest --cov=src --cov-fail-under=80 --cov-report=xml --junitxml=reports/junit.xml tests/
+      - cd $CODEBUILD_SRC_DIR/backend && sam build -t template.yaml
 
   post_build:
     commands:
-      - cd backend
-      - sam package --template-file .aws-sam/build/template.yaml --s3-bucket $SAM_ARTIFACT_BUCKET --output-template-file packaged-template.yaml
+      - cd $CODEBUILD_SRC_DIR/backend && sam package --template-file .aws-sam/build/template.yaml --s3-bucket $SAM_ARTIFACT_BUCKET --output-template-file packaged-template.yaml
 
 reports:
   pytest_reports:
